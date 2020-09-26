@@ -43,7 +43,13 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
+    //android-components(mozilla)
     implementation 'org.mozilla.components:concept-engine:49.0.0'
     implementation 'org.mozilla.components:browser-engine-gecko-nightly:49.0.0'
+    implementation 'org.mozilla.components:browser-toolbar:49.0.0'
+    implementation 'org.mozilla.components:feature-toolbar:49.0.0'
+    implementation 'org.mozilla.components:browser-state:49.0.0'
+    implementation 'org.mozilla.components:browser-session:49.0.0'
+    implementation 'org.mozilla.components:feature-session:49.0.0'
 
 }
