@@ -5,6 +5,8 @@ import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
+import androidx.activity.ComponentActivity
+import dagger.hilt.android.AndroidEntryPoint
 import mozilla.components.browser.engine.gecko.GeckoEngine
 import mozilla.components.browser.session.Session
 import mozilla.components.browser.session.SessionManager
@@ -16,12 +18,14 @@ import mozilla.components.concept.engine.EngineView
 import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.toolbar.ToolbarFeature
+import javax.inject.Inject
 
-class BrowserActivity : Activity() {
+@AndroidEntryPoint
+class BrowserActivity : ComponentActivity() {
 
-    private val engine: Engine by lazy { GeckoEngine(this) }
-    private val store: BrowserStore by lazy { BrowserStore() }
-    private val sessionManager: SessionManager by lazy { SessionManager(engine, store) }
+    @Inject lateinit var engine: Engine
+    @Inject lateinit var  store: BrowserStore
+    @Inject lateinit var  sessionManager: SessionManager
 
     private lateinit var sessionFeature: SessionFeature
     private lateinit var toolbarFeature: ToolbarFeature
@@ -50,19 +54,11 @@ class BrowserActivity : Activity() {
             Session("https://www.mozilla.org")
         )
 
+        lifecycle.addObserver(sessionFeature)
+        lifecycle.addObserver(toolbarFeature)
     }
 
-    override fun onStart() {
-        super.onStart()
-        sessionFeature.start()
-        toolbarFeature.start()
-    }
 
-    override fun onStop() {
-        super.onStop()
-        sessionFeature.stop()
-        toolbarFeature.stop()
-    }
 
     override fun onCreateView(
         parent: View?,
