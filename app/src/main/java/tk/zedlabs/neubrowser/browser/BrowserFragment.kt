@@ -22,6 +22,7 @@ import mozilla.components.feature.findinpage.view.FindInPageBar
 import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.session.SessionUseCases
+import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import tk.zedlabs.neubrowser.R
 import tk.zedlabs.neubrowser.browser.toolbar.ToolbarIntegration
 import tk.zedlabs.neubrowser.downloads.DownloadService
@@ -39,11 +40,11 @@ class BrowserFragment : Fragment() {
     @Inject lateinit var downloadsUseCases: DownloadsUseCases
     @Inject lateinit var searchUseCases: SearchUseCases
 
-    private lateinit var sessionFeature: SessionFeature
-    private lateinit var downloadsFeature: DownloadsFeature
-    private lateinit var findInPageFeature: FindInPageFeature
+    private val sessionFeature = ViewBoundFeatureWrapper<SessionFeature>()
+    private val downloadsFeature = ViewBoundFeatureWrapper<DownloadsFeature>()
+    private val findInPageFeature = ViewBoundFeatureWrapper<FindInPageFeature>()
 
-    private lateinit var toolbarIntegration: ToolbarIntegration
+    private val toolbarIntegration =  ViewBoundFeatureWrapper<ToolbarIntegration>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,35 +57,37 @@ class BrowserFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val engineView: EngineView = view.findViewById<View>(R.id.engineView) as EngineView
 
-        sessionFeature = SessionFeature(
+        sessionFeature.set(SessionFeature(
             store,
             sessionUseCases.goBack,
             engineUseCases,
             engineView
-        )
+        ), this, view)
 
-        findInPageFeature = FindInPageFeature(
+        val toolbar = view.findViewById<BrowserToolbar>(R.id.toolbar)
+
+        findInPageFeature.set(FindInPageFeature(
             store,
             view.findViewById<FindInPageBar>(R.id.findInPageBar),
             engineView
         ) {
             view.findViewById<FindInPageBar>(R.id.findInPageBar).visibility = View.GONE
-        }
+        }, this, view)
 
-        val toolbar = view.findViewById<BrowserToolbar>(R.id.toolbar)
 
-        toolbarIntegration = ToolbarIntegration(
+        toolbarIntegration.set(ToolbarIntegration(
             requireContext(),
             store,
             toolbar,
+            sessionManager,
             sessionUseCases,
             searchUseCases
         ){
             view.findViewById<FindInPageBar>(R.id.findInPageBar).visibility = View.VISIBLE
-            findInPageFeature.bind(store.state.selectedTab!!)
-        }
+            findInPageFeature.get()?.bind(store.state.selectedTab!!)
+        }, this, view)
 
-        downloadsFeature = DownloadsFeature(
+        downloadsFeature.set(DownloadsFeature(
             requireContext(),
             store,
             downloadsUseCases,
@@ -97,16 +100,12 @@ class BrowserFragment : Fragment() {
                 DownloadService::class
             ),
             fragmentManager = childFragmentManager
-        )
+        ), this, view)
 
         sessionManager.add(
             Session("https://www.theverge.com")
         )
 
-        lifecycle.addObserver(sessionFeature)
-        lifecycle.addObserver(toolbarIntegration)
-        lifecycle.addObserver(downloadsFeature)
-        lifecycle.addObserver(findInPageFeature)
     }
 
     override fun onRequestPermissionsResult(
@@ -114,7 +113,7 @@ class BrowserFragment : Fragment() {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-        downloadsFeature.onPermissionsResult(permissions, grantResults)
+        downloadsFeature.get()?.onPermissionsResult(permissions, grantResults)
     }
 
 }

@@ -59,6 +59,7 @@ dependencies {
     implementation 'org.mozilla.components:browser-session:49.0.0'
     implementation 'org.mozilla.components:feature-session:49.0.0'
     implementation 'org.mozilla.components:feature-downloads:49.0.0'
+    implementation 'org.mozilla.components:feature-tabs:49.0.0'
 
 
     //DI

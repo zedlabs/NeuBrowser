@@ -3,10 +3,12 @@ package tk.zedlabs.neubrowser.browser.toolbar
 import android.content.Context
 import androidx.appcompat.content.res.AppCompatResources
 import mozilla.components.browser.menu.item.SimpleBrowserMenuItem
+import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionUseCases
+import mozilla.components.feature.tabs.toolbar.TabsToolbarFeature
 import mozilla.components.feature.toolbar.ToolbarFeature
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import tk.zedlabs.neubrowser.R
@@ -15,6 +17,7 @@ class ToolbarIntegration (
     context: Context,
     store: BrowserStore,
     toolbar: BrowserToolbar,
+    sessionManager: SessionManager,
     sessionUseCases: SessionUseCases,
     private val searchUseCases: SearchUseCases,
     private val findInPage: () -> Unit
@@ -25,8 +28,14 @@ class ToolbarIntegration (
     store,
     sessionUseCases.loadUrl,
     { searchTerms -> searchUseCases.defaultSearch(searchTerms) }
-
     )
+
+    private val tabsToolbarFeature = TabsToolbarFeature(
+        toolbar,
+        sessionManager
+    ){
+        //Todo
+    }
 
     init {
         toolbar.display.menuBuilder = mozilla.components.browser.menu.BrowserMenuBuilder(
@@ -46,6 +55,7 @@ class ToolbarIntegration (
         toolbar.edit.colors = toolbar.edit.colors.copy(
             text = 0xFFFFFFFF.toInt()
         )
+        
     }
 
     override fun start() {
