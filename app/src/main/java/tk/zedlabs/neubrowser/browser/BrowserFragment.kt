@@ -74,6 +74,7 @@ class BrowserFragment : Fragment() {
         val toolbar = view.findViewById<BrowserToolbar>(R.id.toolbar)
 
         toolbarIntegration = ToolbarIntegration(
+            requireContext(),
             store,
             toolbar,
             sessionUseCases,

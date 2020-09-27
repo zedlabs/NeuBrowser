@@ -1,5 +1,7 @@
 package tk.zedlabs.neubrowser.browser.toolbar
 
+import android.content.Context
+import androidx.appcompat.content.res.AppCompatResources
 import mozilla.components.browser.menu.item.SimpleBrowserMenuItem
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.BrowserToolbar
@@ -7,8 +9,10 @@ import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.toolbar.ToolbarFeature
 import mozilla.components.support.base.feature.LifecycleAwareFeature
+import tk.zedlabs.neubrowser.R
 
 class ToolbarIntegration (
+    context: Context,
     store: BrowserStore,
     toolbar: BrowserToolbar,
     sessionUseCases: SessionUseCases,
@@ -32,6 +36,15 @@ class ToolbarIntegration (
                     listener = { findInPage() }
                 )
             )
+        )
+        toolbar.display.setUrlBackground(
+            AppCompatResources.getDrawable(context, R.drawable.url_background)
+        )
+        toolbar.display.colors = toolbar.display.colors.copy(
+            text = 0xFFFFFFFF.toInt()
+        )
+        toolbar.edit.colors = toolbar.edit.colors.copy(
+            text = 0xFFFFFFFF.toInt()
         )
     }
 
