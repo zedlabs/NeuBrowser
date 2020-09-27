@@ -8,10 +8,12 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
+import mozilla.components.browser.menu.item.SimpleBrowserMenuItem
 import mozilla.components.browser.search.SearchEngineManager
 import mozilla.components.browser.session.Session
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.session.usecases.EngineSessionUseCases
+import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.concept.engine.Engine
@@ -19,6 +21,8 @@ import mozilla.components.concept.engine.EngineView
 import mozilla.components.feature.downloads.DownloadsFeature
 import mozilla.components.feature.downloads.DownloadsUseCases
 import mozilla.components.feature.downloads.manager.FetchDownloadManager
+import mozilla.components.feature.findinpage.FindInPageFeature
+import mozilla.components.feature.findinpage.view.FindInPageBar
 import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.session.SessionUseCases
@@ -37,10 +41,13 @@ class BrowserActivity : AppCompatActivity() {
     private lateinit var sessionFeature: SessionFeature
     private lateinit var toolbarFeature: ToolbarFeature
     private lateinit var downloadsFeature: DownloadsFeature
+    private lateinit var findInPageFeature: FindInPageFeature
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_browser)
+
+        val engineView: EngineView = findViewById<View>(R.id.engineView) as EngineView
 
         val sessionUseCases = SessionUseCases(sessionManager)
         val engineUseCases = EngineSessionUseCases(sessionManager)
@@ -51,11 +58,33 @@ class BrowserActivity : AppCompatActivity() {
             store,
             sessionUseCases.goBack,
             engineUseCases,
-            findViewById<View>(R.id.engineView) as EngineView
+            engineView
+        )
+
+        findInPageFeature = FindInPageFeature(
+            store,
+            findViewById<FindInPageBar>(R.id.findInPageBar),
+            engineView
+        ){
+            findViewById<FindInPageBar>(R.id.findInPageBar).visibility = View.GONE
+        }
+
+        val toolbar = findViewById<BrowserToolbar>(R.id.toolbar)
+
+        toolbar.display.menuBuilder = mozilla.components.browser.menu.BrowserMenuBuilder(
+            items = listOf(
+                SimpleBrowserMenuItem(
+                    label = "find in Page",
+                    listener = {
+                        findViewById<FindInPageBar>(R.id.findInPageBar).visibility = View.VISIBLE
+                        findInPageFeature.bind(store.state.selectedTab!!)
+                    }
+                )
+            )
         )
 
         toolbarFeature = ToolbarFeature(
-            findViewById<BrowserToolbar>(R.id.toolbar),
+            toolbar,
             store,
             sessionUseCases.loadUrl,
             { searchTerms ->  searchUseCases.defaultSearch(searchTerms)}
@@ -84,6 +113,7 @@ class BrowserActivity : AppCompatActivity() {
         lifecycle.addObserver(sessionFeature)
         lifecycle.addObserver(toolbarFeature)
         lifecycle.addObserver(downloadsFeature)
+        lifecycle.addObserver(findInPageFeature)
     }
 
     override fun onRequestPermissionsResult(
