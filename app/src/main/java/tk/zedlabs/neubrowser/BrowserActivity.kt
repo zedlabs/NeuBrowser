@@ -8,6 +8,7 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
+import mozilla.components.browser.search.SearchEngineManager
 import mozilla.components.browser.session.Session
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.session.usecases.EngineSessionUseCases
@@ -18,6 +19,7 @@ import mozilla.components.concept.engine.EngineView
 import mozilla.components.feature.downloads.DownloadsFeature
 import mozilla.components.feature.downloads.DownloadsUseCases
 import mozilla.components.feature.downloads.manager.FetchDownloadManager
+import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.toolbar.ToolbarFeature
@@ -28,8 +30,9 @@ import javax.inject.Inject
 class BrowserActivity : AppCompatActivity() {
 
     @Inject lateinit var engine: Engine
-    @Inject lateinit var  store: BrowserStore
-    @Inject lateinit var  sessionManager: SessionManager
+    @Inject lateinit var store: BrowserStore
+    @Inject lateinit var sessionManager: SessionManager
+    @Inject lateinit var searchEngineManager: SearchEngineManager
 
     private lateinit var sessionFeature: SessionFeature
     private lateinit var toolbarFeature: ToolbarFeature
@@ -42,6 +45,7 @@ class BrowserActivity : AppCompatActivity() {
         val sessionUseCases = SessionUseCases(sessionManager)
         val engineUseCases = EngineSessionUseCases(sessionManager)
         val downloadsUseCases = DownloadsUseCases(store)
+        val searchUseCases = SearchUseCases(this, searchEngineManager, sessionManager)
 
         sessionFeature = SessionFeature(
             store,
@@ -53,7 +57,9 @@ class BrowserActivity : AppCompatActivity() {
         toolbarFeature = ToolbarFeature(
             findViewById<BrowserToolbar>(R.id.toolbar),
             store,
-            sessionUseCases.loadUrl
+            sessionUseCases.loadUrl,
+            { searchTerms ->  searchUseCases.defaultSearch(searchTerms)}
+
         )
 
         downloadsFeature = DownloadsFeature(

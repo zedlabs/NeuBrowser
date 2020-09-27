@@ -2,12 +2,16 @@ package tk.zedlabs.neubrowser.modules
 
 import android.app.Application
 import android.content.Context
+import android.provider.Settings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ApplicationComponent
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import mozilla.components.browser.engine.gecko.GeckoEngine
 import mozilla.components.browser.engine.gecko.fetch.GeckoViewFetchClient
+import mozilla.components.browser.search.SearchEngineManager
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.Engine
@@ -46,5 +50,16 @@ class CoreComponentsModule {
     @Singleton
     fun providesClient(application: Application): Client{
         return GeckoViewFetchClient(application)
+    }
+
+    @Provides
+    @Singleton
+    fun providesSearchEngineManager(application: Application): SearchEngineManager{
+        return SearchEngineManager().apply {
+            GlobalScope.launch {
+                loadAsync(application).await()
+            }
+
+        }
     }
 }
