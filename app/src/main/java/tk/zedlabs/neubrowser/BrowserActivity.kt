@@ -1,11 +1,9 @@
 package tk.zedlabs.neubrowser
 
-import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
-import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import mozilla.components.browser.menu.item.SimpleBrowserMenuItem
@@ -27,6 +25,7 @@ import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.toolbar.ToolbarFeature
+import tk.zedlabs.neubrowser.browser.BrowserFragment
 import tk.zedlabs.neubrowser.downloads.DownloadService
 import javax.inject.Inject
 
@@ -34,94 +33,16 @@ import javax.inject.Inject
 class BrowserActivity : AppCompatActivity() {
 
     @Inject lateinit var engine: Engine
-    @Inject lateinit var store: BrowserStore
-    @Inject lateinit var sessionManager: SessionManager
-    @Inject lateinit var searchEngineManager: SearchEngineManager
-
-    private lateinit var sessionFeature: SessionFeature
-    private lateinit var toolbarFeature: ToolbarFeature
-    private lateinit var downloadsFeature: DownloadsFeature
-    private lateinit var findInPageFeature: FindInPageFeature
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_browser)
 
-        val engineView: EngineView = findViewById<View>(R.id.engineView) as EngineView
-
-        val sessionUseCases = SessionUseCases(sessionManager)
-        val engineUseCases = EngineSessionUseCases(sessionManager)
-        val downloadsUseCases = DownloadsUseCases(store)
-        val searchUseCases = SearchUseCases(this, searchEngineManager, sessionManager)
-
-        sessionFeature = SessionFeature(
-            store,
-            sessionUseCases.goBack,
-            engineUseCases,
-            engineView
-        )
-
-        findInPageFeature = FindInPageFeature(
-            store,
-            findViewById<FindInPageBar>(R.id.findInPageBar),
-            engineView
-        ){
-            findViewById<FindInPageBar>(R.id.findInPageBar).visibility = View.GONE
+        if(savedInstanceState == null){
+            supportFragmentManager
+                .beginTransaction()
+                .add(android.R.id.content, BrowserFragment())
+                .commit()
         }
-
-        val toolbar = findViewById<BrowserToolbar>(R.id.toolbar)
-
-        toolbar.display.menuBuilder = mozilla.components.browser.menu.BrowserMenuBuilder(
-            items = listOf(
-                SimpleBrowserMenuItem(
-                    label = "find in Page",
-                    listener = {
-                        findViewById<FindInPageBar>(R.id.findInPageBar).visibility = View.VISIBLE
-                        findInPageFeature.bind(store.state.selectedTab!!)
-                    }
-                )
-            )
-        )
-
-        toolbarFeature = ToolbarFeature(
-            toolbar,
-            store,
-            sessionUseCases.loadUrl,
-            { searchTerms ->  searchUseCases.defaultSearch(searchTerms)}
-
-        )
-
-        downloadsFeature = DownloadsFeature(
-            applicationContext,
-            store,
-            downloadsUseCases,
-            onNeedToRequestPermissions = {permissions ->
-                requestPermissions(permissions, 1)
-            },
-            downloadManager = FetchDownloadManager(
-                applicationContext,
-                store,
-                DownloadService::class
-            ),
-            fragmentManager = supportFragmentManager
-        )
-
-        sessionManager.add(
-            Session("https://www.theverge.com")
-        )
-
-        lifecycle.addObserver(sessionFeature)
-        lifecycle.addObserver(toolbarFeature)
-        lifecycle.addObserver(downloadsFeature)
-        lifecycle.addObserver(findInPageFeature)
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        downloadsFeature.onPermissionsResult(permissions, grantResults)
     }
 
     override fun onCreateView(
