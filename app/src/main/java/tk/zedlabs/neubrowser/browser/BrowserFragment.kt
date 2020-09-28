@@ -4,14 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.fragment_browser.*
 import mozilla.components.browser.search.SearchEngineManager
 import mozilla.components.browser.session.Session
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.session.usecases.EngineSessionUseCases
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.store.BrowserStore
+import mozilla.components.browser.tabstray.BrowserTabsTray
 import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.feature.downloads.DownloadsFeature
@@ -22,6 +25,8 @@ import mozilla.components.feature.findinpage.view.FindInPageBar
 import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.session.SessionUseCases
+import mozilla.components.feature.tabs.TabsUseCases
+import mozilla.components.feature.tabs.tabstray.TabsFeature
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import tk.zedlabs.neubrowser.R
 import tk.zedlabs.neubrowser.browser.toolbar.ToolbarIntegration
@@ -39,10 +44,12 @@ class BrowserFragment : Fragment() {
     @Inject lateinit var engineUseCases: EngineSessionUseCases
     @Inject lateinit var downloadsUseCases: DownloadsUseCases
     @Inject lateinit var searchUseCases: SearchUseCases
+    @Inject lateinit var tabsUseCases: TabsUseCases
 
     private val sessionFeature = ViewBoundFeatureWrapper<SessionFeature>()
     private val downloadsFeature = ViewBoundFeatureWrapper<DownloadsFeature>()
     private val findInPageFeature = ViewBoundFeatureWrapper<FindInPageFeature>()
+    private val tabsFeature = ViewBoundFeatureWrapper<TabsFeature>()
 
     private val toolbarIntegration =  ViewBoundFeatureWrapper<ToolbarIntegration>()
 
@@ -79,6 +86,7 @@ class BrowserFragment : Fragment() {
             requireContext(),
             store,
             toolbar,
+            view.findViewById(R.id.drawer),
             sessionManager,
             sessionUseCases,
             searchUseCases
@@ -102,9 +110,24 @@ class BrowserFragment : Fragment() {
             fragmentManager = childFragmentManager
         ), this, view)
 
+
+        tabsFeature.set(TabsFeature(
+            view.findViewById<BrowserTabsTray>(R.id.tabsTray),
+            store,
+            tabsUseCases.selectTab,
+            tabsUseCases.removeTab
+        ){
+            drawer.close()
+        }, this, view)
+
         sessionManager.add(
             Session("https://www.theverge.com")
         )
+
+        addTab.setOnClickListener {
+            tabsUseCases.addTab("about:blank", selectTab = true)
+            drawer.close()
+        }
 
     }
 

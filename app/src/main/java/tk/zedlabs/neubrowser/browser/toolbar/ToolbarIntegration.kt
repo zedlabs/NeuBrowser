@@ -2,6 +2,7 @@ package tk.zedlabs.neubrowser.browser.toolbar
 
 import android.content.Context
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.drawerlayout.widget.DrawerLayout
 import mozilla.components.browser.menu.item.SimpleBrowserMenuItem
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.state.store.BrowserStore
@@ -17,6 +18,7 @@ class ToolbarIntegration (
     context: Context,
     store: BrowserStore,
     toolbar: BrowserToolbar,
+    drawer: DrawerLayout,
     sessionManager: SessionManager,
     sessionUseCases: SessionUseCases,
     private val searchUseCases: SearchUseCases,
@@ -34,7 +36,7 @@ class ToolbarIntegration (
         toolbar,
         sessionManager
     ){
-        //Todo
+        drawer.open()
     }
 
     init {
