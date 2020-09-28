@@ -7,5 +7,5 @@ Android privacy browser made with mozilla android-components,android-jetpack and
 - Find in Page
 - tabs
 - search
-- web extentions
+- web extentions(WIP)
 
